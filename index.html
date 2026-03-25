@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ranking Comercial Live</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        // IMPORTANTE: Substitui pelos teus dados REAIS do Firebase Console
+        // Se ainda não tens, o app vai carregar mas não vai salvar na nuvem até preencheres aqui.
+        const firebaseConfig = {
+            apiKey: "SUA_API_KEY",
+            authDomain: "SEU_PROJETO.firebaseapp.com",
+            projectId: "SEU_PROJETO_ID",
+            storageBucket: "SEU_PROJETO.appspot.com",
+            messagingSenderId: "SEU_SENDER_ID",
+            appId: "SEU_APP_ID"
+        };
+
+        function App() {
+            const [sellers, setSellers] = useState([
+                { id: 1, name: 'Guilherme', sales: 0, contracts: 0 },
+                { id: 2, name: 'Vanessa', sales: 0, contracts: 0 }
+            ]);
+
+            // Mock de ícones para rodar no navegador sem pacotes complexos
+            const Trophy = () => <span className="text-2xl">🏆</span>;
+            const TrendingUp = () => <span className="text-emerald-500">📈</span>;
+            const CheckCircle = () => <span className="text-blue-500">✅</span>;
+
+            const handleIncrement = (id, field, amount) => {
+                setSellers(prev => prev.map(s => 
+                    s.id === id ? { ...s, [field]: Math.max(0, s[field] + amount) } : s
+                ));
+            };
+
+            const topSales = useMemo(() => [...sellers].sort((a, b) => b.sales - a.sales), [sellers]);
+
+            return (
+                <div className="max-w-4xl mx-auto p-6 space-y-10">
+                    <header className="flex justify-between items-center bg-slate-900 p-8 rounded-[2rem] border border-slate-800 shadow-2xl">
+                        <div>
+                            <h1 className="text-3xl font-black italic uppercase tracking-tighter">Ranking <span className="text-emerald-500">Comercial</span></h1>
+                            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Painel de Performance</p>
+                        </div>
+                    </header>
+
+                    {/* Pódio Simples */}
+                    <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 h-80 flex items-end justify-center gap-4">
+                        {topSales[1] && (
+                            <div className="flex flex-col items-center w-24">
+                                <span className="text-[10px] font-bold mb-2">{topSales[1].name}</span>
+                                <div className="w-full bg-slate-800 h-32 rounded-t-xl flex items-center justify-center border-t-2 border-slate-600">
+                                    <span className="text-xl font-bold opacity-20">02</span>
+                                </div>
+                            </div>
+                        )}
+                        {topSales[0] && (
+                            <div className="flex flex-col items-center w-32">
+                                <span className="text-xs font-black text-yellow-500 mb-2 uppercase">{topSales[0].name}</span>
+                                <div className="w-full bg-emerald-500 h-48 rounded-t-xl flex flex-col items-center justify-center border-t-4 border-emerald-300 shadow-2xl">
+                                    <Trophy />
+                                    <span className="text-4xl font-black italic text-emerald-950">01</span>
+                                </div>
+                            </div>
+                        )}
+                        {topSales[2] && (
+                            <div className="flex flex-col items-center w-24">
+                                <span className="text-[10px] font-bold mb-2">{topSales[2].name}</span>
+                                <div className="w-full bg-slate-800/50 h-20 rounded-t-xl flex items-center justify-center border-t-2 border-slate-700">
+                                    <span className="text-lg font-bold opacity-10">03</span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Gestão */}
+                    <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 shadow-xl space-y-4">
+                        <h2 className="font-bold text-xl mb-6 flex items-center gap-2">📝 Gestão de Equipa</h2>
+                        {sellers.map(s => (
+                            <div key={s.id} className="flex flex-col md:flex-row items-center gap-
