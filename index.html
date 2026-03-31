@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ranking TV v13.0 - Grupo Soitic</title>
+    <title>Podio Soitic v14.0 Premium TV</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -12,182 +12,35 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #050505; color: #f8fafc; overflow-x: hidden; }
-        .bg-card { background-color: #0f0f12; border: 1px solid #1f1f23; }
-        .bar-transition { transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
-        .input-field { background: #000; border: 1px solid #333; color: #fff; border-radius: 12px; padding: 12px; text-align: right; width: 100%; font-family: monospace; font-weight: bold; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: radial-gradient(circle at top right, #111116, #010103);
+            color: #f1f1f4; 
+            overflow: hidden; 
+            min-height: 100vh;
+        }
+
         .italic-force { font-style: italic !important; }
-        
-        /* Ajustes para Monitor/TV */
-        .podium-container { min-height: 70vh; display: flex; align-items: flex-end; }
-        .podium-giant-text { font-size: 5rem; line-height: 1; }
-        .leader-name { font-size: 1.8rem; margin-bottom: 1rem; }
-    </style>
-</head>
-<body class="italic-force">
 
-    <header class="border-b border-white/5 bg-black/80 sticky top-0 z-50 backdrop-blur-md">
-        <div class="max-w-[1800px] mx-auto px-8 py-6 flex justify-between items-center">
-            <div>
-                <h1 class="text-3xl font-black italic uppercase leading-none text-white tracking-tighter">Grupo <span class="text-amber-500">Soitic</span></h1>
-                <p class="text-[10px] tracking-[0.5em] text-slate-500 font-bold uppercase mt-2">Sincronizado v13.0 • Monitor Mode</p>
-            </div>
-            <div class="flex gap-4">
-                <button onclick="document.getElementById('management-section').classList.toggle('hidden')" class="text-[10px] font-black border border-amber-500/30 text-amber-500 px-6 py-3 rounded-full hover:bg-amber-500 hover:text-black transition-all uppercase">Ocultar/Mostrar Gestão</button>
-                <button onclick="resetData()" class="text-[10px] font-black border border-white/10 text-slate-500 px-6 py-3 rounded-full hover:bg-red-600 hover:text-white transition-all uppercase">Zerar Tudo</button>
-            </div>
-        </div>
-    </header>
-
-    <main class="max-w-[1800px] mx-auto px-8 py-10">
-        
-        <div class="grid lg:grid-cols-2 gap-12 mb-16" id="podiums-container">
-            </div>
-
-        <div id="management-section" class="space-y-8">
-            <div class="bg-card rounded-[3rem] overflow-hidden shadow-2xl border border-white/5">
-                <div class="p-8 border-b border-white/5 bg-white/[0.02]">
-                    <h2 class="text-sm font-black uppercase tracking-widest text-slate-500">Painel de Lançamentos</h2>
-                </div>
-                <div id="sellers-list" class="p-8 grid md:grid-cols-2 gap-8">
-                    </div>
-            </div>
-        </div>
-
-    </main>
-
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyDXIjm1BOM-8dO85elFdl-CL9y80e-UaSQ",
-            authDomain: "podio-comercia.firebaseapp.com",
-            projectId: "podio-comercia",
-            storageBucket: "podio-comercia.firebasestorage.app",
-            messagingSenderId: "973336659250",
-            appId: "1:973336659250:web:5f16eb4015289837a9c32b"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-
-        let state = {
-            sellers: [
-                { id: 1, name: 'Guilherme', sales: 0, contracts: 0, target: 6000 },
-                { id: 2, name: 'Vanessa', sales: 0, contracts: 0, target: 6000 },
-                { id: 3, name: 'Luiz', sales: 0, target: 3000, contracts: 0 },
-                { id: 4, name: 'João', sales: 0, target: 3000, contracts: 0 }
-            ]
-        };
-
-        function formatCurrency(val) {
-            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
+        /* Estilo Vidro Flutuante */
+        .glass-card { 
+            background: rgba(18, 18, 23, 0.7); 
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 40px 100px rgba(0,0,0,0.6);
+            border-radius: 4rem;
         }
 
-        function handleInput(input, id, field) {
-            let value = input.value.replace(/\D/g, "");
-            const numValue = parseFloat(value / 100);
-            const seller = state.sellers.find(s => s.id === id);
-            
-            if (field === 'sales' && numValue >= seller.target && seller.sales < seller.target) {
-                confetti({ particleCount: 200, spread: 90, origin: { y: 0.5 } });
-            }
+        /* Efeitos Neon e Glow */
+        .neon-text-gold { color: #facc15; text-shadow: 0 0 30px rgba(250, 204, 21, 0.6); }
+        .neon-text-emerald { color: #10b981; text-shadow: 0 0 30px rgba(16, 185, 129, 0.6); }
+        .neon-text-blue { color: #3b82f6; text-shadow: 0 0 30px rgba(59, 130, 246, 0.6); }
 
-            seller[field] = numValue;
-            input.value = formatCurrency(numValue);
-            db.ref('dashboard_v12').set(state);
-            updateProgressVisuals();
-        }
+        .bar-transition { transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
+        .management-input { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); color: #fff; border-radius: 16px; padding: 16px; text-align: right; width: 100%; font-family: monospace; font-weight: bold; font-size: 1.1rem;}
+        .management-input:focus { border-color: #facc15; outline: none; }
 
-        db.ref('dashboard_v12').on('value', (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                state = data;
-                if (document.activeElement.tagName !== 'INPUT') renderInitialList();
-                updateProgressVisuals();
-            }
-        });
-
-        function renderInitialList() {
-            const list = document.getElementById('sellers-list');
-            list.innerHTML = state.sellers.map(s => `
-                <div class="p-8 rounded-[2rem] bg-white/[0.03] border border-white/5">
-                    <div class="flex justify-between items-center mb-6">
-                        <p class="font-black text-2xl uppercase italic text-white">${s.name}</p>
-                        <p class="text-[10px] text-slate-500 font-bold uppercase">Meta: ${formatCurrency(s.target)}</p>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4 mb-6">
-                        <div>
-                            <label class="currency-label text-emerald-500 uppercase italic">Vendas</label>
-                            <input type="text" value="${formatCurrency(s.sales)}" oninput="handleInput(this, ${s.id}, 'sales')" class="input-field">
-                        </div>
-                        <div>
-                            <label class="currency-label text-blue-500 uppercase italic">Contratos</label>
-                            <input type="text" value="${formatCurrency(s.contracts || 0)}" oninput="handleInput(this, ${s.id}, 'contracts')" class="input-field">
-                        </div>
-                    </div>
-                    <div class="h-4 w-full bg-black/60 rounded-full p-[2px] border border-white/5">
-                        <div id="bar-${s.id}" class="h-full bar-transition rounded-full"></div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function updateProgressVisuals() {
-            const podiums = document.getElementById('podiums-container');
-            const sortedSales = [...state.sellers].sort((a, b) => b.sales - a.sales);
-            const sortedContracts = [...state.sellers].sort((a, b) => (b.contracts || 0) - (a.contracts || 0));
-
-            podiums.innerHTML = `
-                ${renderGiantPodium("Ranking Vendas (R$)", sortedSales, 'sales', 'bg-emerald-600')}
-                ${renderGiantPodium("Contratos Aceitos", sortedContracts, 'contracts', 'bg-blue-600')}
-            `;
-
-            state.sellers.forEach(s => {
-                const prog = Math.min((s.sales / s.target) * 100, 100);
-                const bar = document.getElementById(`bar-${s.id}`);
-                if (bar) bar.style.width = prog + "%";
-                if (bar) bar.className = `h-full bar-transition rounded-full ${prog >= 100 ? 'bg-amber-500' : 'bg-emerald-500'}`;
-            });
-        }
-
-        function renderGiantPodium(title, data, field, color) {
-            return `
-                <div class="bg-card rounded-[3.5rem] p-12 border border-white/10 shadow-[0_0_80px_rgba(0,0,0,0.5)]">
-                    <h3 class="text-sm font-black uppercase tracking-[0.4em] text-slate-500 mb-16 text-center italic">${title}</h3>
-                    <div class="flex items-end justify-center gap-6 h-[400px]">
-                        <div class="text-center w-full">
-                            <span class="text-xl font-bold text-slate-400 block mb-4 truncate italic">${data[1]?.name || '-'}</span>
-                            <div class="bg-white/5 h-40 rounded-t-[2rem] border-t border-white/10 flex flex-col items-center justify-center">
-                                <span class="text-2xl font-black text-slate-500 italic">2º</span>
-                                <span class="text-[12px] font-mono text-slate-400 opacity-60">${formatCurrency(data[1]?.[field])}</span>
-                            </div>
-                        </div>
-                        <div class="text-center w-full">
-                            <span class="leader-name font-black uppercase italic text-white drop-shadow-lg block">${data[0]?.name || '-'}</span>
-                            <div class="${color} h-64 rounded-t-[2.5rem] shadow-[0_-20px_50px_rgba(0,0,0,0.3)] border-t border-white/30 flex flex-col items-center justify-center transform scale-110">
-                                <span class="podium-giant-text font-black italic text-white drop-shadow-2xl">1º</span>
-                                <span class="text-sm font-bold text-white/95 mt-2 bg-black/20 px-4 py-1 rounded-full">${formatCurrency(data[0]?.[field])}</span>
-                            </div>
-                        </div>
-                        <div class="text-center w-full">
-                            <span class="text-lg font-bold text-slate-600 block mb-4 truncate italic">${data[2]?.name || '-'}</span>
-                            <div class="bg-white/5 h-24 rounded-t-[2rem] border-t border-white/10 flex flex-col items-center justify-center">
-                                <span class="text-xl font-black text-slate-700 italic">3º</span>
-                                <span class="text-[10px] font-mono text-slate-600 opacity-40">${formatCurrency(data[2]?.[field])}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>`;
-        }
-
-        function resetData() {
-            if(confirm("Zerar todos os dados?")) {
-                state.sellers.forEach(s => { s.sales = 0; s.contracts = 0; });
-                db.ref('dashboard_v12').set(state);
-            }
-        }
-
-        renderInitialList();
-        updateProgressVisuals();
-    </script>
-</body>
-</html>
+        /* Animações Monitor */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .podium-giant-text { font-size: 6rem; line-height: 1; animation: fadeIn 0.5s ease-out; }
+    </
