@@ -43,4 +43,171 @@
         /* Animações Monitor */
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .podium-giant-text { font-size: 6rem; line-height: 1; animation: fadeIn 0.5s ease-out; }
-    </
+    </style>
+</head>
+<body class="p-8 italic-force">
+
+    <header class="max-w-[1900px] mx-auto flex justify-between items-center mb-16 px-12">
+        <div>
+            <h1 class="text-4xl font-black italic uppercase leading-none tracking-tighter text-white">Grupo <span class="text-amber-500">Soitic</span></h1>
+            <p class="text-[11px] tracking-[0.6em] text-slate-600 font-bold uppercase mt-3">Monitor de Performance • v14.0 Premium</p>
+        </div>
+        <div class="flex gap-4">
+            <button onclick="document.getElementById('management-section').classList.toggle('hidden')" class="text-[11px] font-black border border-amber-500/20 text-amber-500/80 px-8 py-4 rounded-full hover:bg-amber-500 hover:text-black hover:border-amber-500 transition-all uppercase">Ocultar/Mostrar Lançamentos</button>
+            <button onclick="resetData()" class="text-[11px] font-black text-slate-700 hover:text-rose-500 transition-all uppercase">Zerar Tudo</button>
+        </div>
+    </header>
+
+    <main class="max-w-[1900px] mx-auto mb-20">
+        
+        <div class="grid lg:grid-cols-2 gap-16" id="podiums-container">
+            </div>
+
+        <div id="management-section" class="mt-20 hidden">
+            <div class="bg-card rounded-[3rem] p-10 shadow-2xl border border-white/5">
+                <div class="p-8 border-b border-white/5 bg-white/[0.01] mb-10">
+                    <h2 class="text-sm font-black uppercase tracking-widest text-slate-600">Gestão de Lançamentos Individuais</h2>
+                </div>
+                <div id="sellers-list" class="grid md:grid-cols-2 gap-10">
+                    </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // CONFIG FIREBASE (podio-comercia)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDXIjm1BOM-8dO85elFdl-CL9y80e-UaSQ",
+            authDomain: "podio-comercia.firebaseapp.com",
+            projectId: "podio-comercia",
+            storageBucket: "podio-comercia.firebasestorage.app",
+            messagingSenderId: "973336659250",
+            appId: "1:973336659250:web:5f16eb4015289837a9c32b"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let state = {
+            sellers: [
+                { id: 1, name: 'Guilherme', sales: 0, contracts: 0, target: 6000 },
+                { id: 2, name: 'Vanessa', sales: 0, contracts: 0, target: 6000 },
+                { id: 3, name: 'Luiz', sales: 0, target: 3000, contracts: 0 },
+                { id: 4, name: 'João', sales: 0, target: 3000, contracts: 0 }
+            ]
+        };
+
+        function formatCurrency(val) {
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
+        }
+
+        function handleInput(input, id, field) {
+            let value = input.value.replace(/\D/g, "");
+            const numValue = parseFloat(value / 100);
+            const seller = state.sellers.find(s => s.id === id);
+            
+            if (field === 'sales' && numValue >= seller.target && seller.sales < seller.target) {
+                confetti({ particleCount: 250, spread: 100, origin: { y: 0.5 } });
+            }
+
+            seller[field] = numValue;
+            input.value = formatCurrency(numValue);
+            db.ref('dashboard_v12').set(state);
+            updateProgressVisuals();
+        }
+
+        db.ref('dashboard_v12').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                state = data;
+                if (document.activeElement.tagName !== 'INPUT') renderInitialList();
+                updateProgressVisuals();
+            }
+        });
+
+        function renderInitialList() {
+            const list = document.getElementById('sellers-list');
+            list.innerHTML = state.sellers.map(s => `
+                <div class="p-10 rounded-[2.5rem] bg-white/[0.02] border border-white/5 shadow-xl">
+                    <div class="flex justify-between items-center mb-8">
+                        <p class="font-black text-3xl uppercase italic text-white">${s.name}</p>
+                        <p class="text-[11px] text-slate-600 font-bold uppercase">Meta: ${formatCurrency(s.target)}</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-6 mb-8">
+                        <div>
+                            <label class="text-[10px] font-black text-emerald-500 uppercase block mb-2">Vendas (R$)</label>
+                            <input type="text" value="${formatCurrency(s.sales)}" oninput="handleInput(this, ${s.id}, 'sales')" class="management-input">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black text-blue-500 uppercase block mb-2">Contratos (#)</label>
+                            <input type="text" value="${formatCurrency(s.contracts || 0)}" oninput="handleInput(this, ${s.id}, 'contracts')" class="management-input">
+                        </div>
+                    </div>
+                    <div class="h-5 w-full bg-black rounded-full p-[3px] border border-white/5">
+                        <div id="bar-${s.id}" class="h-full bar-transition rounded-full bg-emerald-500"></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateProgressVisuals() {
+            const podiums = document.getElementById('podiums-container');
+            const sortedSales = [...state.sellers].sort((a, b) => b.sales - a.sales);
+            const sortedContracts = [...state.sellers].sort((a, b) => (b.contracts || 0) - (a.contracts || 0));
+
+            podiums.innerHTML = `
+                ${renderGiantPremiumPodium("Ranking Vendas (R$)", sortedSales, 'sales', 'emerald', 'bg-emerald-600')}
+                ${renderGiantPremiumPodium("Contratos Aceitos", sortedContracts, 'contracts', 'blue', 'bg-blue-600')}
+            `;
+
+            state.sellers.forEach(s => {
+                const prog = Math.min((s.sales / s.target) * 100, 100);
+                const bar = document.getElementById(`bar-${s.id}`);
+                if (bar) bar.style.width = prog + "%";
+                if (bar) bar.className = `h-full bar-transition rounded-full ${prog >= 100 ? 'bg-amber-400' : 'bg-emerald-500'}`;
+            });
+        }
+
+        function renderGiantPremiumPodium(title, data, field, colorClass, barColor) {
+            return `
+                <div class="glass-card p-16">
+                    <h3 class="text-sm font-black uppercase tracking-[0.5em] text-slate-600 mb-20 text-center italic">${title}</h3>
+                    <div class="flex items-end justify-center gap-10 h-[450px]">
+                        <div class="text-center w-full">
+                            <span class="text-2xl font-bold text-slate-500 block mb-5 truncate italic">${data[1]?.name || '-'}</span>
+                            <div class="bg-white/5 h-48 rounded-t-[2rem] border-t border-white/10 flex flex-col items-center justify-center shadow-lg">
+                                <span class="text-3xl font-black text-slate-500 italic opacity-60">2º</span>
+                                <span class="text-[13px] font-mono text-slate-500 opacity-60 mt-1">${formatCurrency(data[1]?.[field])}</span>
+                            </div>
+                        </div>
+                        <div class="text-center w-full">
+                            <span class="text-3xl font-black uppercase italic text-white drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] block mb-6 tracking-widest neon-text-${colorClass}">${data[0]?.name || '-'}</span>
+                            <div class="${barColor} h-72 rounded-t-[2.5rem] shadow-[0_-20px_50px_rgba(0,0,0,0.5)] border-t border-white/40 flex flex-col items-center justify-center transform scale-105 shadow-neon-${colorClass}">
+                                <span class="podium-giant-text font-black italic text-white drop-shadow-2xl">1º</span>
+                                <span class="text-sm font-bold text-black/95 mt-4 bg-white/95 px-6 py-2 rounded-full tracking-tighter">${formatCurrency(data[0]?.[field])}</span>
+                            </div>
+                        </div>
+                        <div class="text-center w-full">
+                            <span class="text-xl font-bold text-slate-700 block mb-5 truncate italic">${data[2]?.name || '-'}</span>
+                            <div class="bg-white/5 h-32 rounded-t-[2rem] border-t border-white/10 flex flex-col items-center justify-center">
+                                <span class="text-2xl font-black text-slate-700 italic opacity-40">3º</span>
+                                <span class="text-[11px] font-mono text-slate-700 opacity-40 mt-1">${formatCurrency(data[2]?.[field])}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+        }
+
+        function resetData() {
+            if(confirm("Deseja zerar todos os dados?")) {
+                state.sellers.forEach(s => { s.sales = 0; s.contracts = 0; });
+                db.ref('dashboard_v12').set(state);
+            }
+        }
+
+        renderInitialList();
+        updateProgressVisuals();
+    </script>
+</body>
+</html>
