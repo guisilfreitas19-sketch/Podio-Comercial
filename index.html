@@ -3,67 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Soitic v14.2 Ultra-Contrast</title>
+    <title>Soitic v14.3 - Full Info</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     
     <style>
-        body { 
-            background-color: #000000; /* Preto absoluto para maior contraste */
-            color: #ffffff; 
-            font-family: 'Inter', sans-serif;
-            overflow-x: hidden;
-        }
-
+        body { background-color: #000; color: #fff; font-family: 'Inter', sans-serif; }
         .italic-force { font-style: italic !important; }
-
-        /* Pódios com bordas visíveis em qualquer monitor */
-        .podium-box {
-            border: 2px solid rgba(255,255,255,0.15);
-            background: rgba(255,255,255,0.03);
-            border-radius: 2rem 2rem 0 0;
-        }
-
-        .gold-border { border-color: #fbbf24 !important; box-shadow: 0 0 30px rgba(251, 191, 36, 0.2); }
-        .emerald-border { border-color: #10b981 !important; box-shadow: 0 0 30px rgba(16, 185, 129, 0.2); }
-        .blue-border { border-color: #3b82f6 !important; box-shadow: 0 0 30px rgba(59, 130, 246, 0.2); }
-
-        .text-max-visibility {
-            color: #ffffff !important;
-            text-shadow: 2px 2px 4px rgba(0,0,0,1);
-            font-weight: 900;
-        }
-
-        .value-tag {
-            background: #ffffff;
-            color: #000000;
-            padding: 4px 12px;
-            border-radius: 8px;
-            font-weight: 900;
-            font-size: 1.1rem;
-        }
+        .podium-box { border: 2px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.02); border-radius: 2rem 2rem 0 0; }
+        .management-card { background: #111; border: 1px solid #333; border-radius: 1.5rem; padding: 20px; }
+        .input-label { font-size: 10px; font-weight: 900; letter-spacing: 0.1em; margin-bottom: 6px; display: block; text-transform: uppercase; }
+        .management-input { background: #000; border: 1px solid #444; color: #fff; border-radius: 10px; padding: 12px; text-align: right; width: 100%; font-weight: bold; font-family: monospace; }
+        .management-input:focus { border-color: #fbbf24; outline: none; }
     </style>
 </head>
 <body class="p-4 italic-force">
 
-    <header class="flex justify-between items-center mb-12 px-8 border-b border-white/10 pb-6">
-        <h1 class="text-4xl font-black italic uppercase text-white">Grupo <span class="text-amber-500">Soitic</span></h1>
-        <button onclick="document.getElementById('management-section').classList.toggle('hidden')" class="bg-white text-black font-black px-6 py-2 rounded-full text-[10px] uppercase">Editar Dados</button>
+    <header class="flex justify-between items-center mb-10 px-8 border-b border-white/10 pb-6">
+        <h1 class="text-3xl font-black italic uppercase">Grupo <span class="text-amber-500">Soitic</span></h1>
+        <button onclick="document.getElementById('management-section').classList.toggle('hidden')" class="bg-amber-500 text-black font-black px-6 py-2 rounded-full text-[10px] uppercase">Lançar Dados</button>
     </header>
 
-    <main class="max-w-[1900px] mx-auto">
-        <div class="grid lg:grid-cols-2 gap-12" id="podiums-container"></div>
+    <main class="max-w-[1800px] mx-auto">
+        <div class="grid lg:grid-cols-2 gap-10" id="podiums-container"></div>
 
-        <section id="management-section" class="mt-20 hidden bg-zinc-900 p-10 rounded-3xl border-2 border-white/20">
-            <div id="sellers-list" class="grid md:grid-cols-2 gap-8"></div>
+        <section id="management-section" class="mt-16 bg-zinc-900/50 p-8 rounded-[2.5rem] border border-white/10">
+            <h2 class="text-xs font-black text-slate-500 mb-8 uppercase tracking-widest">Painel de Lançamento Individual</h2>
+            <div id="sellers-list" class="grid md:grid-cols-2 gap-6"></div>
         </section>
     </main>
 
     <script>
-        // Configuração mantida do Firebase
+        // Configuração Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDXIjm1BOM-8dO85elFdl-CL9y80e-UaSQ",
             authDomain: "podio-comercia.firebaseapp.com",
@@ -90,14 +63,21 @@
             }
         });
 
+        // AQUI ESTÁ A CORREÇÃO: ADICIONADOS OS SPAN (LABELS)
         function renderManagement() {
             const list = document.getElementById('sellers-list');
             list.innerHTML = state.sellers.map(s => `
-                <div class="p-6 bg-black border border-white/20 rounded-2xl">
-                    <p class="font-black text-white mb-4 uppercase">${s.name}</p>
+                <div class="management-card">
+                    <p class="font-black text-white mb-5 uppercase italic text-lg border-b border-white/5 pb-2">${s.name}</p>
                     <div class="grid grid-cols-2 gap-4">
-                        <input type="text" value="${formatCurrency(s.sales)}" oninput="updateVal(this, ${s.id}, 'sales')" class="p-3 bg-zinc-800 rounded text-right font-bold text-white">
-                        <input type="text" value="${formatCurrency(s.contracts || 0)}" oninput="updateVal(this, ${s.id}, 'contracts')" class="p-3 bg-zinc-800 rounded text-right font-bold text-white">
+                        <div>
+                            <span class="input-label text-emerald-500">Vendas (R$)</span>
+                            <input type="text" value="${formatCurrency(s.sales)}" oninput="updateVal(this, ${s.id}, 'sales')" class="management-input">
+                        </div>
+                        <div>
+                            <span class="input-label text-blue-500">Contratos (#)</span>
+                            <input type="text" value="${formatCurrency(s.contracts || 0)}" oninput="updateVal(this, ${s.id}, 'contracts')" class="management-input">
+                        </div>
                     </div>
                 </div>
             `).join('');
@@ -117,41 +97,37 @@
             const sortedContracts = [...state.sellers].sort((a, b) => (b.contracts || 0) - (a.contracts || 0));
 
             container.innerHTML = `
-                ${createPodiumHtml("🏆 RANKING VENDAS", sortedSales, 'sales', 'emerald-border', 'bg-emerald-600')}
-                ${createPodiumHtml("📝 CONTRATOS ACEITOS", sortedContracts, 'contracts', 'blue-border', 'bg-blue-600')}
+                ${createPodiumHtml("RANKING VENDAS", sortedSales, 'sales', 'bg-emerald-600')}
+                ${createPodiumHtml("CONTRATOS ACEITOS", sortedContracts, 'contracts', 'bg-blue-600')}
             `;
         }
 
-        function createPodiumHtml(title, data, field, borderClass, barClass) {
+        function createPodiumHtml(title, data, field, barClass) {
             return `
-                <div class="bg-zinc-950 p-12 rounded-[3rem] border-2 border-white/5 shadow-2xl">
-                    <h2 class="text-center text-2xl font-black text-white mb-20 tracking-[0.3em] uppercase">${title}</h2>
-                    <div class="flex items-end justify-center gap-4 h-[400px]">
-                        
+                <div class="bg-zinc-950 p-10 rounded-[3rem] border border-white/5">
+                    <h2 class="text-center text-xl font-black text-slate-400 mb-16 tracking-widest uppercase italic">${title}</h2>
+                    <div class="flex items-end justify-center gap-4 h-[350px]">
                         <div class="w-full text-center">
-                            <p class="text-max-visibility text-xl mb-4 uppercase">${data[1]?.name || '-'}</p>
-                            <div class="podium-box h-40 flex flex-col items-center justify-center">
-                                <span class="text-3xl font-black text-white/40">2º</span>
-                                <span class="text-white font-bold mt-2">${formatCurrency(data[1]?.[field])}</span>
+                            <p class="text-slate-400 text-sm mb-3 uppercase font-bold">${data[1]?.name || '-'}</p>
+                            <div class="podium-box h-32 flex flex-col items-center justify-center">
+                                <span class="text-xl font-black text-white/20 italic">2º</span>
+                                <span class="text-white text-xs mt-1">${formatCurrency(data[1]?.[field])}</span>
                             </div>
                         </div>
-
                         <div class="w-full text-center">
-                            <p class="text-max-visibility text-3xl mb-6 uppercase text-amber-400">${data[0]?.name || '-'}</p>
-                            <div class="${barClass} ${borderClass} h-72 rounded-t-[2.5rem] flex flex-col items-center justify-center transform scale-110 relative border-t-8 border-x-4">
-                                <span class="text-7xl font-black text-white italic drop-shadow-2xl">1º</span>
-                                <div class="mt-4 value-tag">${formatCurrency(data[0]?.[field])}</div>
+                            <p class="text-white text-2xl font-black mb-5 uppercase italic">${data[0]?.name || '-'}</p>
+                            <div class="${barClass} h-60 rounded-t-[2.5rem] flex flex-col items-center justify-center transform scale-105 border-t-4 border-white/20">
+                                <span class="text-6xl font-black text-white italic drop-shadow-2xl">1º</span>
+                                <div class="mt-3 bg-white text-black px-3 py-1 rounded font-black text-xs">${formatCurrency(data[0]?.[field])}</div>
                             </div>
                         </div>
-
                         <div class="w-full text-center">
-                            <p class="text-max-visibility text-lg mb-4 uppercase">${data[2]?.name || '-'}</p>
-                            <div class="podium-box h-24 flex flex-col items-center justify-center">
-                                <span class="text-2xl font-black text-white/20">3º</span>
-                                <span class="text-white/80 font-bold mt-1 text-sm">${formatCurrency(data[2]?.[field])}</span>
+                            <p class="text-slate-600 text-xs mb-3 uppercase font-bold">${data[2]?.name || '-'}</p>
+                            <div class="podium-box h-20 flex flex-col items-center justify-center">
+                                <span class="text-lg font-black text-white/10 italic">3º</span>
+                                <span class="text-slate-500 text-[10px] mt-1">${formatCurrency(data[2]?.[field])}</span>
                             </div>
                         </div>
-
                     </div>
                 </div>
             `;
