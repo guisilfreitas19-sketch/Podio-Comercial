@@ -48,31 +48,42 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // Estado inicial com os nomes solicitados
-        let state = { 
-            sellers: [
-                { id: 1, name: "JOÃO & GABRIEL", sales: 0, contracts: 0 },
-                { id: 2, name: "GUILHERME", sales: 0, contracts: 0 },
-                { id: 3, name: "LUIZ", sales: 0, contracts: 0 },
-                { id: 4, name: "VANESSA", sales: 0, contracts: 0 }
-            ] 
-        };
+        // LISTA OFICIAL (O código vai forçar o banco a aceitar estes nomes)
+        const officialSellers = [
+            { id: 1, name: "JOÃO & GABRIEL" },
+            { id: 2, name: "GUILHERME" },
+            { id: 3, name: "LUIZ" },
+            { id: 4, name: "VANESSA" }
+        ];
+
+        let state = { sellers: [] };
 
         function formatCurrency(val) {
             return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
         }
 
-        // Sincronização em tempo real
+        // Sincronização e Correção de Nomes
         db.ref('dashboard_v12').on('value', (snapshot) => {
             const data = snapshot.val();
-            if (data && data.sellers) {
-                state = data;
-                if (document.activeElement.tagName !== 'INPUT') renderManagement();
-                renderPodiums();
+            
+            // Se o banco estiver vazio OU os nomes estiverem diferentes dos oficiais:
+            if (!data || !data.sellers || data.sellers[0].name !== "JOÃO & GABRIEL") {
+                console.log("Atualizando nomes no banco de dados...");
+                const newState = {
+                    sellers: officialSellers.map(s => ({
+                        ...s,
+                        sales: 0,
+                        contracts: 0
+                    }))
+                };
+                db.ref('dashboard_v12').set(newState);
+                state = newState;
             } else {
-                // Inicializa o banco se estiver vazio
-                db.ref('dashboard_v12').set(state);
+                state = data;
             }
+
+            if (document.activeElement.tagName !== 'INPUT') renderManagement();
+            renderPodiums();
         });
 
         function renderManagement() {
@@ -102,7 +113,6 @@
                 val = parseFloat(el.value.replace(/\D/g, "") / 100) || 0;
                 el.value = formatCurrency(val);
             } else {
-                // Lógica para números inteiros em contratos
                 val = parseInt(el.value.replace(/\D/g, "")) || 0;
                 el.value = val;
             }
