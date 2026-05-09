@@ -29,7 +29,7 @@
     <main class="max-w-[1800px] mx-auto">
         <div class="grid lg:grid-cols-2 gap-10" id="podiums-container"></div>
 
-        <section id="management-section" class="mt-16 bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-xl">
+        <section id="management-section" class="mt-16 hidden bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-xl">
             <h2 class="text-xs font-black text-slate-400 mb-8 uppercase tracking-widest">Painel de Lançamento Individual</h2>
             <div id="sellers-list" class="grid md:grid-cols-2 gap-6"></div>
         </section>
@@ -48,7 +48,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // Lista de vendedores atualizada
+        // Estado inicial com os nomes solicitados
         let state = { 
             sellers: [
                 { id: 1, name: "JOÃO & GABRIEL", sales: 0, contracts: 0 },
@@ -62,7 +62,7 @@
             return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
         }
 
-        // Sincronização com Banco de Dados
+        // Sincronização em tempo real
         db.ref('dashboard_v12').on('value', (snapshot) => {
             const data = snapshot.val();
             if (data && data.sellers) {
@@ -70,7 +70,7 @@
                 if (document.activeElement.tagName !== 'INPUT') renderManagement();
                 renderPodiums();
             } else {
-                // Se o banco estiver vazio, inicializa com os nomes novos
+                // Inicializa o banco se estiver vazio
                 db.ref('dashboard_v12').set(state);
             }
         });
@@ -83,11 +83,13 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <span class="input-label text-emerald-600">Vendas (R$)</span>
-                            <input type="text" value="${formatCurrency(s.sales)}" oninput="updateVal(this, ${s.id}, 'sales')" class="management-input">
+                            <input type="text" value="${formatCurrency(s.sales)}" 
+                                oninput="updateVal(this, ${s.id}, 'sales')" class="management-input">
                         </div>
                         <div>
                             <span class="input-label text-blue-600">Contratos (#)</span>
-                            <input type="text" value="${formatCurrency(s.contracts || 0).replace('R$', '').trim()}" oninput="updateVal(this, ${s.id}, 'contracts')" class="management-input">
+                            <input type="text" value="${s.contracts || 0}" 
+                                oninput="updateVal(this, ${s.id}, 'contracts')" class="management-input">
                         </div>
                     </div>
                 </div>
@@ -95,16 +97,19 @@
         }
 
         function updateVal(el, id, field) {
-            let val = parseFloat(el.value.replace(/\D/g, "") / 100);
+            let val;
+            if (field === 'sales') {
+                val = parseFloat(el.value.replace(/\D/g, "") / 100) || 0;
+                el.value = formatCurrency(val);
+            } else {
+                // Lógica para números inteiros em contratos
+                val = parseInt(el.value.replace(/\D/g, "")) || 0;
+                el.value = val;
+            }
+
             const seller = state.sellers.find(s => s.id === id);
             if (seller) {
                 seller[field] = val;
-                // Para contratos, não mostramos o R$ na hora de digitar
-                if (field === 'contracts') {
-                    el.value = val.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-                } else {
-                    el.value = formatCurrency(val);
-                }
                 db.ref('dashboard_v12').set(state);
             }
         }
@@ -121,7 +126,7 @@
         }
 
         function createPodiumHtml(title, data, field, barClass, isCurrency) {
-            const format = (v) => isCurrency ? formatCurrency(v) : (v || 0).toFixed(0);
+            const format = (v) => isCurrency ? formatCurrency(v) : Math.floor(v || 0);
             
             return `
                 <div class="bg-white p-10 rounded-[3rem] border border-slate-200 shadow-sm">
