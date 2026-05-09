@@ -63,6 +63,7 @@
         db.ref('dashboard_v12').on('value', (snapshot) => {
             const data = snapshot.val();
             
+            // Verifica se precisa resetar nomes ou inicializar
             if (!data || !data.sellers || data.sellers[0].name !== "JOÃO & GABRIEL") {
                 const newState = {
                     sellers: officialSellers.map(s => ({ ...s, sales: 0, contracts: 0 }))
@@ -89,8 +90,8 @@
                                 oninput="updateVal(this, ${s.id}, 'sales')" class="management-input">
                         </div>
                         <div>
-                            <span class="input-label text-blue-600">Contratos (#)</span>
-                            <input type="text" value="${s.contracts || 0}" 
+                            <span class="input-label text-blue-600">Contratos (R$)</span>
+                            <input type="text" value="${formatCurrency(s.contracts)}" 
                                 oninput="updateVal(this, ${s.id}, 'contracts')" class="management-input">
                         </div>
                     </div>
@@ -99,16 +100,9 @@
         }
 
         function updateVal(el, id, field) {
-            let val;
-            if (field === 'sales') {
-                // Lógica de Dinheiro: divide por 100 para centavos
-                val = parseFloat(el.value.replace(/\D/g, "") / 100) || 0;
-                el.value = formatCurrency(val);
-            } else {
-                // Lógica de Número Inteiro: apenas números
-                val = parseInt(el.value.replace(/\D/g, "")) || 0;
-                el.value = val;
-            }
+            // Agora ambos os campos usam a mesma lógica de moeda (centavos)
+            let val = parseFloat(el.value.replace(/\D/g, "") / 100) || 0;
+            el.value = formatCurrency(val);
 
             const seller = state.sellers.find(s => s.id === id);
             if (seller) {
@@ -123,38 +117,38 @@
             const sortedContracts = [...state.sellers].sort((a, b) => (b.contracts || 0) - (a.contracts || 0));
 
             container.innerHTML = `
-                ${createPodiumHtml("RANKING VENDAS", sortedSales, 'sales', 'bg-emerald-500', true)}
-                ${createPodiumHtml("CONTRATOS ACEITOS", sortedContracts, 'contracts', 'bg-blue-500', false)}
+                ${createPodiumHtml("RANKING VENDAS", sortedSales, 'sales', 'bg-emerald-500')}
+                ${createPodiumHtml("CONTRATOS ACEITOS", sortedContracts, 'contracts', 'bg-blue-500')}
             `;
         }
 
-        function createPodiumHtml(title, data, field, barClass, isCurrency) {
-            // Se for isCurrency (Vendas), usa formatCurrency. Se não, usa apenas o número.
-            const formatValue = (v) => isCurrency ? formatCurrency(v) : (v || 0);
-            
+        function createPodiumHtml(title, data, field, barClass) {
             return `
                 <div class="bg-white p-10 rounded-[3rem] border border-slate-200 shadow-sm">
                     <h2 class="text-center text-xl font-black text-slate-400 mb-16 tracking-widest uppercase italic">${title}</h2>
                     <div class="flex items-end justify-center gap-4 h-[350px]">
+                        <!-- 2º Lugar -->
                         <div class="w-full text-center">
                             <p class="text-slate-500 text-sm mb-3 uppercase font-bold">${data[1]?.name || '-'}</p>
                             <div class="podium-box h-32 flex flex-col items-center justify-center">
                                 <span class="text-xl font-black text-slate-200 italic">2º</span>
-                                <span class="text-slate-700 text-xs mt-1 font-bold">${formatValue(data[1]?.[field])}</span>
+                                <span class="text-slate-700 text-xs mt-1 font-bold">${formatCurrency(data[1]?.[field])}</span>
                             </div>
                         </div>
+                        <!-- 1º Lugar -->
                         <div class="w-full text-center">
                             <p class="text-slate-900 text-2xl font-black mb-5 uppercase italic">${data[0]?.name || '-'}</p>
                             <div class="${barClass} h-60 rounded-t-[2.5rem] flex flex-col items-center justify-center transform scale-105 shadow-lg">
                                 <span class="text-6xl font-black text-white italic drop-shadow-md">1º</span>
-                                <div class="mt-3 bg-white text-slate-900 px-3 py-1 rounded font-black text-xs shadow-sm">${formatValue(data[0]?.[field])}</div>
+                                <div class="mt-3 bg-white text-slate-900 px-3 py-1 rounded font-black text-xs shadow-sm">${formatCurrency(data[0]?.[field])}</div>
                             </div>
                         </div>
+                        <!-- 3º Lugar -->
                         <div class="w-full text-center">
                             <p class="text-slate-400 text-xs mb-3 uppercase font-bold">${data[2]?.name || '-'}</p>
                             <div class="podium-box h-20 flex flex-col items-center justify-center">
                                 <span class="text-lg font-black text-slate-100 italic">3º</span>
-                                <span class="text-slate-500 text-[10px] mt-1 font-bold">${formatValue(data[2]?.[field])}</span>
+                                <span class="text-slate-500 text-[10px] mt-1 font-bold">${formatCurrency(data[2]?.[field])}</span>
                             </div>
                         </div>
                     </div>
